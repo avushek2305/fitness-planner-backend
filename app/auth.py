@@ -13,11 +13,22 @@ from app.database import get_db
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
 
+
+def _ensure_bcrypt_password_length(password: str) -> None:
+    if len(password.encode("utf-8")) > 72:
+        raise ValueError("password must be 72 bytes or fewer for the current hashing setup.")
+
+
 def hash_password(password: str) -> str:
+    _ensure_bcrypt_password_length(password)
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
+    try:
+        _ensure_bcrypt_password_length(plain_password)
+    except ValueError:
+        return False
     return pwd_context.verify(plain_password, password_hash)
 
 
